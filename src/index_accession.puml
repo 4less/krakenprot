@@ -1,0 +1,46 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+
+package index {
+    package indexbuilder {
+        class IndexBuilder
+        class IndexBuilderTask {
+            reader: FastxReader
+            taxonomy: NCBITaxonomy
+            accession: AccessionMap
+            index: IndexStore
+        }
+    }
+
+    package indexdb {
+        Interface IndexLoader {
+            int getTaxId(String kmer);
+            IEncoding getEncoder();
+            void load(String path);
+        }
+        Interface IndexStore {
+            void put(String s, Integer taxid);
+        }
+        class SplitLongIndex implements IndexLoader, IndexStore
+    }
+}
+
+package accession {
+    Interface AccessionMap {
+        int getTaxId(String accession);
+    }
+
+    class SQLiteAccessionMap extends AccessionMap
+}
+
+
+package report {
+    class Report
+    interface UpdateReceiver
+    interface UpdateSender
+}
+
+IndexBuilderTask --o IndexBuilder
+
+@enduml

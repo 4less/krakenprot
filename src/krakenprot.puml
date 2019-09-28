@@ -1,0 +1,146 @@
+@startuml
+left to right direction
+
+skinparam maxMessageSize 100
+
+package krakenprot {
+
+
+package classifier {
+
+
+    package stats {
+
+
+        interface CountProcessor {
+            var: int
+            ClassificationResult getClassificationResult(
+            ...TaxonCounter[][] taxonCounters, FastxRecord[] records);
+        }
+
+        interface TaxonCounter {
+            void addTaxonId(int id, int read, int readingframe);
+            TaxonCounterTree[][] getTaxonCounters();
+        }
+
+        interface ClassificationOutput {
+            void writeLine(ClassificationResult result,
+            ...TaxonCounter rftCounter, FastxRecord[] records);
+            void close();
+        }
+
+        class CountProcessorNaive implements CountProcessor
+        class CountProcessorBest implements CountProcessor
+
+        class TaxonCounterNaive implements TaxonCounter
+        class TaxonCounterBest implements TaxonCounter
+
+        class ClassificationOutputSimple
+        class ClassificationResult
+    }
+
+
+    package treehitcounter {
+        class TaxonCounterTree {
+            increment(int taxonId)
+            void clear()
+        }
+    }
+
+    Classifier -> ClassifierTask : Start n threads with a ClassifierTask
+
+
+    class Classifier {
+        threads: int
+        best: boolean
+        threshold: int
+        run(int threads)
+    }
+
+    class ClassifierTask {
+        reader: FastxReader
+        reader2: FastxReader
+        index: IndexLoader
+        counter: TaxonCounters
+        processor: RFCountProcessor
+        k: int
+
+        pelock: Object
+
+        run()
+        processReadingFrame()
+        FastxRecord[] getReadPair()
+    }
+
+
+
+}
+
+
+package index {
+    package index.indexdb {
+
+        interface IndexLoader {
+            int getTaxId(String sequence);
+        }
+
+        interface IndexStore {
+            void put(String s, Integer taxid);
+        }
+
+        class SplitLongindex implements IndexLoader, IndexStore {
+            IEncoding getEncoder();
+        }
+
+    }
+
+    package index.indexbuilder {
+        class IndexBuilder
+        class IndexBuilderTask
+    }
+}
+
+package sequence {
+    package encoding {
+        interface IEncoding {
+            String getEncodingString();
+            long kmerToLong(String kmer);
+            String longToKmer(long kmer, int k);
+            String reduce(String sequence);
+            char reduce(char aa);
+            char[] getAlphabet();
+        }
+
+        class Encoding implements IEncoding
+    }
+
+
+    interface FastxReader {
+        reader: BufferedReader
+        FastxRecord readRecord();
+    }
+    abstract class FastxRecord
+    class FastaRecord extends FastxRecord
+    class FastqRecord extends Fastxrecord
+
+    class BufferedFastaReader implements FastxReader
+    class BufferedFastqReader implements FastxReader
+}
+
+package taxonomy {
+    class Taxon {
+        int taxonId;
+        TAXONOMIC_RANK rank;
+        Taxon parent;
+        List<Taxon> children;
+    }
+
+    class NCBITaxonomy {
+        Taxon getLCA(Taxon rt1, Taxon t2);
+        Taxon getTaxon(int taxid);
+    }
+}
+
+}
+
+@enduml

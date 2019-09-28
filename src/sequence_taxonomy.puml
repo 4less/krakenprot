@@ -1,0 +1,94 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+
+package taxonomy {
+    class Taxon {
+        int taxonId;
+        TAXONOMIC_RANK rank;
+        Taxon parent;
+        List<Taxon> children;
+    }
+
+    class NCBITaxonomy {
+        Taxon getLCA(Taxon rt1, Taxon t2);
+        Taxon getTaxon(int taxid);
+    }
+
+    enum TAXONOMIC_RANK {
+        Species
+        Genus
+        ...
+    }
+}
+
+package sequence {
+    package encoding {
+        interface IEncoding {
+            String getEncodingString();
+            long kmerToLong(String kmer);
+            String longToKmer(long kmer, int k);
+            String reduce(String sequence);
+            char reduce(char aa);
+            char[] getAlphabet();
+        }
+
+        class Encoding implements IEncoding {
+            encoding: String
+            bit: int
+        }
+    }
+
+    interface FastxReader {
+        reader: BufferedReader
+        FastxRecord readRecord();
+    }
+
+    abstract class FastxRecord {
+        header: String
+        sequence: String
+
+        String getHeader()
+        String getSequence()
+    }
+
+    class Translation {
+        {static} char[][] extract6ReadingFrames(char[] read)
+    }
+
+    class FastaRecord extends FastxRecord
+    class FastqRecord extends FastxRecord
+
+    class BufferedFastaReader implements FastxReader
+    class BufferedFastqReader implements FastxReader
+}
+
+
+package assessment {
+    class IndexAssessment
+    class IndexAssessmentTask {
+        taxonomy: NCBITaxonomy
+        index: IndexLoader
+        accession: AccessionMap
+        reader: FastxReader
+        k: int
+        encoder: IEncoding
+        counter: TaxonCounterTree
+    }
+
+    IndexAssessment o-- IndexAssessmentTask
+}
+
+package statistics {
+    class OutputStatistics
+    class ClassificationLine
+}
+
+FastxReader --> FastxRecord
+ClassificationLine --o OutputStatistics
+BufferedFastaReader --> FastaRecord
+BufferedFastqReader --> FastqRecord
+Taxon --o NCBITaxonomy
+TAXONOMIC_RANK --o Taxon
+
+@enduml

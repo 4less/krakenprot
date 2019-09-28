@@ -1,0 +1,94 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+
+package classifier {
+
+
+    package treehitcounter {
+        class TaxonCounterTree {
+            increment(int taxonId)
+            void clear()
+        }
+    }
+
+    Classifier o-- ClassifierTask
+
+
+    class Classifier {
+        threads: int
+        best: boolean
+        threshold: int
+        run(int threads)
+    }
+
+
+
+    package java.lang.runnable {
+        interface Runnable
+    }
+
+
+    class ClassifierTask implements Runnable {
+        reader: FastxReader
+        reader2: FastxReader
+        index: IndexLoader
+        counter: TaxonCounters
+        processor: RFCountProcessor
+        k: int
+
+        pelock: Object
+
+        run()
+        processReadingFrame()
+        FastxRecord[] getReadPair()
+    }
+
+
+    package stats {
+        interface CountProcessor {
+            ClassificationResult getClassificationResult(
+            ...TaxonCounter[][] taxonCounters, FastxRecord[] records);
+        }
+
+        interface TaxonCounter {
+            void addTaxonId(int id, int read, int readingframe);
+            TaxonCounterTree[][] getTaxonCounters();
+        }
+
+        interface ClassificationOutput {
+            void writeLine(ClassificationResult result,
+            ...TaxonCounter rftCounter, FastxRecord[] records);
+            void close();
+        }
+
+        class CountProcessorNaive implements CountProcessor {
+            threshold: int
+        }
+        class CountProcessorBest implements CountProcessor {
+            threshold: int
+        }
+
+        class TaxonCounterNaive implements TaxonCounter {
+            counter: TaxonCounterTree
+        }
+        class TaxonCounterBest implements TaxonCounter {
+            counters: TaxonCounterTree[][]
+        }
+
+        class ClassificationOutputSimple implements ClassificationOutput
+
+        class ClassificationResult {
+             int taxid;
+             TaxonCounterTree counter;
+        }
+
+        TaxonCounter o-- TaxonCounterTree
+        CountProcessor --> ClassificationResult
+        ClassificationOutput <-- ClassificationResult
+    }
+}
+
+
+
+@enduml
