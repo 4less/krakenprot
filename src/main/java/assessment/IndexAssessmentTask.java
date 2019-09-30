@@ -3,7 +3,6 @@ package assessment;
 import accession.AccessionMap;
 import classifier.treehitcounter.TaxonCounterTree;
 import index.indexdb.IndexLoader;
-import logger.Log;
 import sequence.FastaRecord;
 import sequence.FastxReader;
 import sequence.encoding.IEncoding;
@@ -74,13 +73,11 @@ public class IndexAssessmentTask implements Runnable {
 
 
     public static TAXONOMIC_RANK getClosestRelevantRank(Taxon taxon) {
-        int iter2 = 0;
         while (taxon.getRank() == TAXONOMIC_RANK.NO_RANK && taxon.getId() > 1)
             taxon = taxon.getParent();
 
         TAXONOMIC_RANK current = taxon.getRank();
         int numVal = current.getNumVal();
-        int iter = 0;
         while (!relevantRanks.contains(numVal) || numVal < 0)
             numVal--;
         return TAXONOMIC_RANK.get(numVal);
@@ -126,7 +123,6 @@ public class IndexAssessmentTask implements Runnable {
 
                 t = taxonomy.getTaxon(guessedTid);
                 increment(getClosestRelevantRank(t).getString());
-                Log.getInstance().ranks.add(t.getRank());
 
                 counter.clear();
 
@@ -134,14 +130,5 @@ public class IndexAssessmentTask implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        Taxon genus = new Taxon(810, 1, TAXONOMIC_RANK.GENUS);
-        Taxon species = new Taxon(813, 810, TAXONOMIC_RANK.SPECIES);
-        species.setParent(genus);
-        genus.addChild(species);
-        System.out.println(species.getRank());
-        System.out.println(getClosestRelevantRank(species));
     }
 }

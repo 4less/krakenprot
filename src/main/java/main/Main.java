@@ -17,6 +17,7 @@ import index.indexdb.SplitLongIndex;
 import org.apache.commons.cli.*;
 import report.UpdateSender;
 import sequence.BufferedFastaReader;
+import sequence.BufferedFastqReader;
 import sequence.FastxReader;
 import sequence.encoding.Encoding;
 import sequence.encoding.IEncoding;
@@ -32,6 +33,9 @@ import java.util.*;
  * Created by joachim on 01.09.19.
  */
 public class Main {
+    /**
+     * Enum for handling different run modes
+     */
     public enum MODE {
         BUILD_INDEX ("build-index", "index building mode"),
         //PREP_NR ("prepare-nr", "prepare nr reference file for database creation"),
@@ -178,10 +182,14 @@ public class Main {
         FastxReader reader1 = null;
         FastxReader reader2 = null;
 
+        boolean fastq = fastx1.endsWith(".fastq") || fastx1.endsWith(".fq") || fastx1.endsWith(".fnq");
+
         try {
-            reader1 = new BufferedFastaReader(new File(fastx1));
+            if (fastq) reader1 = new BufferedFastqReader(new File(fastx1));
+            else reader1 = new BufferedFastaReader(new File(fastx1));
             if (fastx2 != null)
-                reader2 = new BufferedFastaReader(new File(fastx2));
+                if (fastq) reader2 = new BufferedFastqReader(new File(fastx2));
+                else reader2 = new BufferedFastaReader(new File(fastx2));
 
             reader1.addUpdateReceiver(new SimpleUpdateReceiver());
             reader1.setTimer(20000L);
@@ -211,7 +219,8 @@ public class Main {
             if (threshold > 0) newFolderPath.append(threshold);
         }
 
-        String outputFolder = Utilities.makeNewDir(Utilities.getUniqueDirPath(newFolderPath.toString()));
+        String outputFolder = Utilities.makeNewDir(folder);
+        //String outputFolder = Utilities.makeNewDir(Utilities.getUniqueDirPath(newFolderPath.toString()));
 
         ClassificationOutput output = null;
         try {
@@ -415,13 +424,13 @@ public class Main {
                 .build();
         Option nodesOption = Option.builder("n")
                 .longOpt("nodes")
-                .desc("specifiy nodes.dmp for taxonomic information")
+                .desc("specify nodes.dmp for taxonomic information")
                 .required(true)
                 .hasArg(true)
                 .build();
         Option namesOption = Option.builder("m")
                 .longOpt("names")
-                .desc("specifiy nodes.dmp for taxonomic information")
+                .desc("specify names.dmp for taxonomic information")
                 .required(true)
                 .hasArg(true)
                 .build();
@@ -553,7 +562,7 @@ public class Main {
                 .build();
         Option cmdInputOption = Option.builder("cmds")
                 .longOpt("commands")
-                .desc("provide file with commands each line exactly the way they should be used with classify without specifying the classify option. Lines starting with a hashtag are considered comments.")
+                .desc("provide file with commands each line exactly the way they should be used with classify without specifying the classify mode. Do not provide index, names and nodes. Lines starting with a hashtag are considered comments.")
                 .required(true)
                 .hasArg(true)
                 .build();
@@ -618,7 +627,7 @@ public class Main {
         assessOptions.addOption(outputFileOption);
 
         /**
-         * Set options for result process mode
+         * Set options for get-stats mode
          */
         Options resultProcessOptions = new Options();
         resultProcessOptions.addOption(nodesOption);
@@ -628,7 +637,7 @@ public class Main {
         resultProcessOptions.addOption(inputOption);
 
         //optional
-        resultProcessOptions.addOption(outputFileOption);
+        resultProcessOptions.addOption(outputFolderOption);
 
         // which information is found in which column
         resultProcessOptions.addOption(classifiedFieldOption);
@@ -795,8 +804,10 @@ public class Main {
                         }
 
                     } catch (ParseException e) {
+                        String syntax = program + MODE.MULTI_CLASSIFY.name;
                         System.out.println(e.getMessage());
-
+                        formatter.printUsage(writer, 80, syntax, classifyMultipleOptions);
+                        formatter.printHelp(syntax, classifyMultipleOptions);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     } catch (IOException e) {

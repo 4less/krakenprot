@@ -98,40 +98,4 @@ public class Classifier {
 
 
     }
-
-    public static void main(String[] args) {
-        NCBITaxonomy taxonomy = new NCBITaxonomy("nodes.dmp", "names.dmp");
-        IndexLoader index = new SplitLongIndex();
-        index.load("index/k12/");
-
-        FastxReader reader1 = null;
-        FastxReader reader2 = null;
-        try {
-            reader1 = new BufferedFastaReader(new File("reads/1.fa"));
-            reader2 = new BufferedFastaReader(new File("reads/2.fa"));
-
-            reader1.addUpdateReceiver(new SimpleUpdateReceiver());
-            reader1.setTimer(3000L);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        String folder = "classification/";
-        String type = reader2 != null ? "PE" : "SE";
-        Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yy_HH:mm");
-        String outputFolder = Utilities.makeNewDir(folder + "/result_k"+index.getK()+"_" + type + "_"+ formatter.format(date));
-
-        ClassificationOutput output = null;
-        try {
-            output = new ClassificationOutputSimple(new BufferedWriter(new FileWriter(outputFolder + "/results.tsv")));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Classifier classifier = new Classifier (taxonomy, index, reader1, reader2, output);
-        classifier.run(4);
-
-    }
 }

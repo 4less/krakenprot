@@ -77,28 +77,4 @@ public class IndexAssessment {
             e.printStackTrace();
         }
     }
-
-    public static void main(String[] args) {
-        NCBITaxonomy taxonomy = new NCBITaxonomy(new File("nodes.dmp"), new File("names.dmp"));
-        AccessionMap accession = new SQLiteAccessionMap("accession2tid.db");
-        FastxReader reader = null;
-        IndexLoader index = new SplitLongIndex();
-
-        ((SplitLongIndex)index).addUpdateReceiver(new SimpleUpdateReceiver());
-        ((SplitLongIndex)index).setTimer(3000);
-
-        index.load("index/k10_1");
-
-        try {
-            reader = new BufferedFastaReader(new File("ref/nr.chlam.filt.fa"));
-            reader.addUpdateReceiver(new SimpleUpdateReceiver());
-            reader.setTimer(3000);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        IndexAssessment indexAssessment =  new IndexAssessment(index, taxonomy, reader, accession, "assessment/" + "/k10_old.tsv");
-        indexAssessment.run(1);
-    }
 }

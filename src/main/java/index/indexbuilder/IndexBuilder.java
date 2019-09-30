@@ -58,33 +58,4 @@ public class IndexBuilder {
 
         index.shutdown();
     }
-
-    public static void main(String[] args) {
-        SimpleTaxonomy taxonomy = new SimpleNCBITaxonomy("nodes.dmp");
-        AccessionMap accession = new SQLiteAccessionMap("accession2tid.db");
-
-        int k = 15;
-        int threads = 1;
-
-        String folder = "index_chlam/k" + k;
-        folder = Utilities.makeNewDir(folder);
-
-        //IndexStore index = new SyncIndexDB(treehitcounter, k, folder, 125000000);
-        IndexStore index = new SplitLongIndex(taxonomy, folder, new Encoding("LIJMVO,CU,A,G,S,T,P,FY,W,EZ,DB,N,Q,KR,H,X"),k);
-
-        try {
-            //FastxReader reader = new BufferedFastaReader(new File("index_chlam/nr.chlam.fa"));
-            FastxReader reader = new BufferedFastaReader(new File("index_chlam/nr.chlam.fa"));
-
-            reader.addUpdateReceiver(new SimpleUpdateReceiver());
-            System.out.println("set timer to " + 3000L);
-            reader.setTimer(3000L);
-
-            IndexBuilder indexBuilder = new IndexBuilder(taxonomy, accession, reader, index, k);
-            indexBuilder.build(threads);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }
