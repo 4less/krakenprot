@@ -19,14 +19,75 @@ To classify a query run the mode <classify>.
 Provide around 4-5 times ram than the actual index size.
 
 ```bash
-java -Xmx200G -jar krakenprot.jar classify --first query.fa --index db_folder --names names.dmp --nodes nodes.dmp ---outputFolder folder
+java -Xmx200G -jar krakenprot.jar classify --first query.fa --index idx_folder --names taxonomy/names.dmp --nodes taxonomy/nodes.dmp ---outputFolder folder
 ```
 
-### Get 
+The folder then contains
+
+```bash
+# classification output
+folder/results.tsv
+# parameters that were used to run the program
+folder/parameters.txt
+```
+
+
+
+## Get Statistics
+
+To extract statistics from the classification result use mode <get-stats>
+
+```bash
+java -jar krakenprot.jar get-stats --names taxonomy/names.dmp --nodes taxonomy/nodes.dmp --input k10_output/results.tsv --outputFolder outputFolder
+```
+
+KrakenProt will create the output folder if it does not exist that then contains:
+
+```
+outputFolder/counts.csv
+outputFolder/meta.csv
+outputFolder/statistics.csv
+```
+
+When specifying --hseparator _ <get-stats> tries to find the correct taxonomic id in the header at the end separated by an underscore. Then you get additional output files depending on the ranks you specified with --rank
+
+```
+# with --rank species,genus
+outputFolder/counts.csv
+outputFolder/counts_genus.csv
+outputFolder/counts_species.csv
+outputFolder/meta.csv
+outputFolder/statistics.csv
+outputFolder/correct_counts_genus.csv
+outputFolder/correct_counts_species.csv
+```
+
+Statistics will then also contain pearson correlation, sensitivity and precision. 
+
+### Multi-Classify
+
+When classifying multiple queries on the same index use <multi-classify>. With <multi-classify> you only load the index once, and then perform multiple classifications on this index. For that you have to write a script like:
+
+```bash
+# save in query.txt
+# classify query
+-1 query1.fa -t 10 --outputFolder query1_folder --nodes taxonomy/nodes.dmp --names taxonomy/names.dmp
+-1 query2.fa -t 10 --outputFolder query2_folder --nodes taxonomy/nodes.dmp --names taxonomy/names.dmp
+```
+
+The run the <multi-classify> command as follows.
+
+```bash
+java -Xmx200G -jar krakenprot.jar multi-classify --commands query.txt --index idx_folder --names taxonomy/names.dmp --nodes taxonomy/nodes.dmp
+```
+
+The output is exactly the same as if you ran <classify>.
+
+
 
 ## Building the index
 
-Before we build the index, we have to prepare the accession2taxid mapping file. Therefore you need sqlite3.
+Before we build the index, we have to prepare the accession2taxid mapping file. Therefore you need sqlite3. Sqlite is available from: https://www.sqlite.org/index.html;
 
 ### Building the sqlite3 accession mapping database
 
@@ -130,10 +191,13 @@ java -jar krakenprot.jar build-index
 
 to get information on the arguments you have to pass.
 
-To build an index with k-mer size 10 using a unreduced alphabet. A reduced alphabet would be for example ACD,EF,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,Y. ACD and EF would be mapped onto one amino, respectively. If there are no grouped letters, separating commas can be omitted. Make sure to provide enough space to build the index. 
+To build an index with k-mer size 10 using a unreduced alphabet. A reduced alphabet would be for example ACD,EF,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,Y. The groups ACD and EF would be mapped onto one amino acid (A und E, respectively). If there are no grouped letters, separating commas can be omitted. Make sure to provide enough space to build the index. 
 
 ```bash
-java -Xmx200G -jar ./bin/krakenprot.jar build-index --reference nr.$id.fa --ksize 10 --nodes taxonomy/nodes.dmp --accession accession2tid.db --encoding ACDEFGHIKLMNPQRSTVWY --threads 10 --outputFolder ./
+java -Xmx200G -jar krakenprot.jar build-index --reference nr.$id.fa --ksize 10 --nodes taxonomy/nodes.dmp --accession accession2tid.db --encoding ACDEFGHIKLMNPQRSTVWY --threads 10 --outputFolder ./
 ```
 
-This will output a folder k10. If there is a k10 folder, folder will be named k10_1. 
+This will output a folder k10. If there is a k10 folder, folder will be named k10_1.  The output contains the file results.tsv
+
+
+
